@@ -14,7 +14,10 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedTasksRouteImport } from './routes/_authenticated/tasks'
 import { Route as AuthenticatedSubjectsRouteImport } from './routes/_authenticated/subjects'
+import { Route as AuthenticatedPapersRouteImport } from './routes/_authenticated/papers'
+import { Route as AuthenticatedMaterialsRouteImport } from './routes/_authenticated/materials'
 import { Route as AuthenticatedMarksRouteImport } from './routes/_authenticated/marks'
+import { Route as AuthenticatedDocumentsRouteImport } from './routes/_authenticated/documents'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAttendanceRouteImport } from './routes/_authenticated/attendance'
 
@@ -42,9 +45,24 @@ const AuthenticatedSubjectsRoute = AuthenticatedSubjectsRouteImport.update({
   path: '/subjects',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPapersRoute = AuthenticatedPapersRouteImport.update({
+  id: '/papers',
+  path: '/papers',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMaterialsRoute = AuthenticatedMaterialsRouteImport.update({
+  id: '/materials',
+  path: '/materials',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedMarksRoute = AuthenticatedMarksRouteImport.update({
   id: '/marks',
   path: '/marks',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDocumentsRoute = AuthenticatedDocumentsRouteImport.update({
+  id: '/documents',
+  path: '/documents',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
@@ -63,7 +81,10 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/attendance': typeof AuthenticatedAttendanceRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/documents': typeof AuthenticatedDocumentsRoute
   '/marks': typeof AuthenticatedMarksRoute
+  '/materials': typeof AuthenticatedMaterialsRoute
+  '/papers': typeof AuthenticatedPapersRoute
   '/subjects': typeof AuthenticatedSubjectsRoute
   '/tasks': typeof AuthenticatedTasksRoute
 }
@@ -72,7 +93,10 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/attendance': typeof AuthenticatedAttendanceRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/documents': typeof AuthenticatedDocumentsRoute
   '/marks': typeof AuthenticatedMarksRoute
+  '/materials': typeof AuthenticatedMaterialsRoute
+  '/papers': typeof AuthenticatedPapersRoute
   '/subjects': typeof AuthenticatedSubjectsRoute
   '/tasks': typeof AuthenticatedTasksRoute
 }
@@ -83,7 +107,10 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/attendance': typeof AuthenticatedAttendanceRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/documents': typeof AuthenticatedDocumentsRoute
   '/_authenticated/marks': typeof AuthenticatedMarksRoute
+  '/_authenticated/materials': typeof AuthenticatedMaterialsRoute
+  '/_authenticated/papers': typeof AuthenticatedPapersRoute
   '/_authenticated/subjects': typeof AuthenticatedSubjectsRoute
   '/_authenticated/tasks': typeof AuthenticatedTasksRoute
 }
@@ -94,7 +121,10 @@ export interface FileRouteTypes {
     | '/auth'
     | '/attendance'
     | '/dashboard'
+    | '/documents'
     | '/marks'
+    | '/materials'
+    | '/papers'
     | '/subjects'
     | '/tasks'
   fileRoutesByTo: FileRoutesByTo
@@ -103,7 +133,10 @@ export interface FileRouteTypes {
     | '/auth'
     | '/attendance'
     | '/dashboard'
+    | '/documents'
     | '/marks'
+    | '/materials'
+    | '/papers'
     | '/subjects'
     | '/tasks'
   id:
@@ -113,7 +146,10 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/attendance'
     | '/_authenticated/dashboard'
+    | '/_authenticated/documents'
     | '/_authenticated/marks'
+    | '/_authenticated/materials'
+    | '/_authenticated/papers'
     | '/_authenticated/subjects'
     | '/_authenticated/tasks'
   fileRoutesById: FileRoutesById
@@ -161,11 +197,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSubjectsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/papers': {
+      id: '/_authenticated/papers'
+      path: '/papers'
+      fullPath: '/papers'
+      preLoaderRoute: typeof AuthenticatedPapersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/materials': {
+      id: '/_authenticated/materials'
+      path: '/materials'
+      fullPath: '/materials'
+      preLoaderRoute: typeof AuthenticatedMaterialsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/marks': {
       id: '/_authenticated/marks'
       path: '/marks'
       fullPath: '/marks'
       preLoaderRoute: typeof AuthenticatedMarksRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/documents': {
+      id: '/_authenticated/documents'
+      path: '/documents'
+      fullPath: '/documents'
+      preLoaderRoute: typeof AuthenticatedDocumentsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dashboard': {
@@ -188,7 +245,10 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAttendanceRoute: typeof AuthenticatedAttendanceRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedDocumentsRoute: typeof AuthenticatedDocumentsRoute
   AuthenticatedMarksRoute: typeof AuthenticatedMarksRoute
+  AuthenticatedMaterialsRoute: typeof AuthenticatedMaterialsRoute
+  AuthenticatedPapersRoute: typeof AuthenticatedPapersRoute
   AuthenticatedSubjectsRoute: typeof AuthenticatedSubjectsRoute
   AuthenticatedTasksRoute: typeof AuthenticatedTasksRoute
 }
@@ -196,7 +256,10 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAttendanceRoute: AuthenticatedAttendanceRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedDocumentsRoute: AuthenticatedDocumentsRoute,
   AuthenticatedMarksRoute: AuthenticatedMarksRoute,
+  AuthenticatedMaterialsRoute: AuthenticatedMaterialsRoute,
+  AuthenticatedPapersRoute: AuthenticatedPapersRoute,
   AuthenticatedSubjectsRoute: AuthenticatedSubjectsRoute,
   AuthenticatedTasksRoute: AuthenticatedTasksRoute,
 }
