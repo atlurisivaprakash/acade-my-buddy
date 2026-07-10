@@ -91,6 +91,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "ScholarOS — Personal Academic Tracker" },
+      { name: "twitter:description", content: "Track attendance, marks, GPA, study materials and tasks in one calm personal dashboard." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/a7dba307-af14-45b0-8604-b7256198d787" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/a7dba307-af14-45b0-8604-b7256198d787" },
     ],
     links: [
       {
