@@ -14,7 +14,283 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      attendance: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          period: number
+          status: string
+          subject_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          period: number
+          status: string
+          subject_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          period?: number
+          status?: string
+          subject_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      files: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          mime_type: string | null
+          name: string
+          semester: number | null
+          size_bytes: number | null
+          storage_path: string
+          subject_id: string | null
+          tags: string[] | null
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          mime_type?: string | null
+          name: string
+          semester?: number | null
+          size_bytes?: number | null
+          storage_path: string
+          subject_id?: string | null
+          tags?: string[] | null
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          mime_type?: string | null
+          name?: string
+          semester?: number | null
+          size_bytes?: number | null
+          storage_path?: string
+          subject_id?: string | null
+          tags?: string[] | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "files_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marks: {
+        Row: {
+          created_at: string
+          exam_type: string
+          id: string
+          max_score: number
+          note: string | null
+          score: number
+          subject_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          exam_type: string
+          id?: string
+          max_score?: number
+          note?: string | null
+          score: number
+          subject_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          exam_type?: string
+          id?: string
+          max_score?: number
+          note?: string | null
+          score?: number
+          subject_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marks_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          branch: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          roll_no: string | null
+          semester: number | null
+          target_cgpa: number | null
+          updated_at: string
+        }
+        Insert: {
+          branch?: string | null
+          created_at?: string
+          full_name?: string | null
+          id: string
+          roll_no?: string | null
+          semester?: number | null
+          target_cgpa?: number | null
+          updated_at?: string
+        }
+        Update: {
+          branch?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          roll_no?: string | null
+          semester?: number | null
+          target_cgpa?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      subjects: {
+        Row: {
+          code: string | null
+          color: string | null
+          created_at: string
+          credits: number | null
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          code?: string | null
+          color?: string | null
+          created_at?: string
+          credits?: number | null
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          code?: string | null
+          color?: string | null
+          created_at?: string
+          credits?: number | null
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tasks: {
+        Row: {
+          category: string | null
+          completed: boolean
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          priority: string | null
+          subject_id: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          completed?: boolean
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: string | null
+          subject_id?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          completed?: boolean
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: string | null
+          subject_id?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      timetable_slots: {
+        Row: {
+          created_at: string
+          day_of_week: number
+          id: string
+          period: number
+          subject_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_week: number
+          id?: string
+          period: number
+          subject_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number
+          id?: string
+          period?: number
+          subject_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "timetable_slots_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
