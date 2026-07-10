@@ -33,14 +33,14 @@ const NAV = [
 
 export function AppShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
-  const [dark, setDark] = useState(false);
+  const [dark, setDark] = useState(true);
   const [name, setName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const navigate = useNavigate();
 
   useEffect(() => {
-    const stored = typeof window !== "undefined" && localStorage.getItem("scholaros-theme");
-    const isDark = stored === "dark";
+    const stored = typeof window !== "undefined" ? localStorage.getItem("scholaros-theme") : null;
+    const isDark = stored ? stored === "dark" : true;
     setDark(isDark);
     document.documentElement.classList.toggle("dark", isDark);
   }, []);
