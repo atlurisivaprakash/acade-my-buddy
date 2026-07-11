@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import { Card, SectionTitle, Button, Input } from "@/components/ui-primitives";
 import { Loader2, FileDown, FileSpreadsheet, Database } from "lucide-react";
 import { exportAttendancePdf, exportMarksPdf, exportAllExcel, backupJson } from "@/lib/exports";
-import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({ meta: [{ title: "Settings — ScholarOS" }] }),
