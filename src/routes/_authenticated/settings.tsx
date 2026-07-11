@@ -3,7 +3,9 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Card, SectionTitle, Button, Input } from "@/components/ui-primitives";
-import { Loader2 } from "lucide-react";
+import { Loader2, FileDown, FileSpreadsheet, Database } from "lucide-react";
+import { exportAttendancePdf, exportMarksPdf, exportAllExcel, backupJson } from "@/lib/exports";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({ meta: [{ title: "Settings — ScholarOS" }] }),
@@ -182,6 +184,37 @@ function SettingsPage() {
           {saving ? "Saving…" : "Save settings"}
         </Button>
       </div>
+
+      <Card>
+        <h3 className="mb-1 text-base font-semibold">Data management</h3>
+        <p className="mb-4 text-sm text-muted-foreground">
+          Export your academic data or back it up. All exports are generated in your browser.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="secondary" onClick={() => wrap(exportAttendancePdf, "Attendance PDF ready")}>
+            <FileDown className="size-4" />
+            Attendance PDF
+          </Button>
+          <Button variant="secondary" onClick={() => wrap(exportMarksPdf, "Marks PDF ready")}>
+            <FileDown className="size-4" />
+            Marks PDF
+          </Button>
+          <Button variant="secondary" onClick={() => wrap(exportAllExcel, "Excel workbook ready")}>
+            <FileSpreadsheet className="size-4" />
+            Excel backup
+          </Button>
+          <Button variant="secondary" onClick={() => wrap(backupJson, "JSON backup ready")}>
+            <Database className="size-4" />
+            JSON backup
+          </Button>
+        </div>
+      </Card>
     </div>
   );
+}
+
+function wrap(fn: () => Promise<void>, ok: string) {
+  return fn()
+    .then(() => toast.success(ok))
+    .catch((e: unknown) => toast.error(e instanceof Error ? e.message : "Export failed"));
 }
