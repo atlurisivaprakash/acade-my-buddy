@@ -13,22 +13,29 @@ import {
   LogOut,
   Moon,
   Sun,
-  Bell,
   BookMarked,
+  Settings as SettingsIcon,
+  UserRound,
+  CalendarDays,
+  History,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Toaster } from "sonner";
 import { initials } from "@/lib/academic";
+import { NotificationBell } from "@/components/notification-bell";
 
 const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/timetable", label: "Timetable", icon: CalendarDays },
   { to: "/attendance", label: "Attendance", icon: CalendarCheck },
   { to: "/marks", label: "Marks & GPA", icon: GraduationCap },
+  { to: "/history", label: "Academic History", icon: History },
   { to: "/subjects", label: "Subjects", icon: BookMarked },
   { to: "/materials", label: "Study Materials", icon: BookOpen },
   { to: "/papers", label: "Question Papers", icon: FileArchive },
   { to: "/documents", label: "Important Docs", icon: ShieldCheck },
   { to: "/tasks", label: "Task Manager", icon: ListTodo },
+  { to: "/profile", label: "Profile", icon: UserRound },
+  { to: "/settings", label: "Settings", icon: SettingsIcon },
 ] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -74,7 +81,6 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Toaster richColors position="top-right" />
       {/* Sidebar */}
       <SidebarInner
         name={name}
@@ -113,12 +119,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             >
               {dark ? <Sun className="size-4" /> : <Moon className="size-4" />}
             </button>
-            <button
-              className="hidden size-10 place-items-center rounded-lg border border-hairline transition hover:bg-surface-alt sm:grid"
-              aria-label="Notifications"
-            >
-              <Bell className="size-4" />
-            </button>
+            <NotificationBell />
             <button
               onClick={signOut}
               className="hidden items-center gap-2 rounded-lg border border-hairline px-3 py-2 text-sm font-medium transition hover:bg-surface-alt sm:flex"

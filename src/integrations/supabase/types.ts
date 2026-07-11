@@ -146,36 +146,129 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          meta: Json | null
+          read: boolean
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          meta?: Json | null
+          read?: boolean
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          meta?: Json | null
+          read?: boolean
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
+          academic_year: string | null
+          attendance_target: number
+          avatar_url: string | null
           branch: string | null
+          classes_per_day: number
+          college_name: string | null
           created_at: string
+          department: string | null
           full_name: string | null
           id: string
           roll_no: string | null
           semester: number | null
           target_cgpa: number | null
           updated_at: string
+          working_days: number[]
         }
         Insert: {
+          academic_year?: string | null
+          attendance_target?: number
+          avatar_url?: string | null
           branch?: string | null
+          classes_per_day?: number
+          college_name?: string | null
           created_at?: string
+          department?: string | null
           full_name?: string | null
           id: string
           roll_no?: string | null
           semester?: number | null
           target_cgpa?: number | null
           updated_at?: string
+          working_days?: number[]
         }
         Update: {
+          academic_year?: string | null
+          attendance_target?: number
+          avatar_url?: string | null
           branch?: string | null
+          classes_per_day?: number
+          college_name?: string | null
           created_at?: string
+          department?: string | null
           full_name?: string | null
           id?: string
           roll_no?: string | null
           semester?: number | null
           target_cgpa?: number | null
           updated_at?: string
+          working_days?: number[]
+        }
+        Relationships: []
+      }
+      semester_records: {
+        Row: {
+          backlogs: number
+          created_at: string
+          credits_earned: number | null
+          id: string
+          note: string | null
+          semester: number
+          sgpa: number | null
+          total_credits: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          backlogs?: number
+          created_at?: string
+          credits_earned?: number | null
+          id?: string
+          note?: string | null
+          semester: number
+          sgpa?: number | null
+          total_credits?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          backlogs?: number
+          created_at?: string
+          credits_earned?: number | null
+          id?: string
+          note?: string | null
+          semester?: number
+          sgpa?: number | null
+          total_credits?: number | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -258,26 +351,41 @@ export type Database = {
       }
       timetable_slots: {
         Row: {
+          color: string | null
           created_at: string
           day_of_week: number
+          faculty: string | null
           id: string
+          label: string | null
           period: number
+          room: string | null
+          slot_type: string
           subject_id: string | null
           user_id: string
         }
         Insert: {
+          color?: string | null
           created_at?: string
           day_of_week: number
+          faculty?: string | null
           id?: string
+          label?: string | null
           period: number
+          room?: string | null
+          slot_type?: string
           subject_id?: string | null
           user_id: string
         }
         Update: {
+          color?: string | null
           created_at?: string
           day_of_week?: number
+          faculty?: string | null
           id?: string
+          label?: string | null
           period?: number
+          room?: string | null
+          slot_type?: string
           subject_id?: string | null
           user_id?: string
         }
