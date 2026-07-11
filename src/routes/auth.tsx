@@ -2,6 +2,8 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
+import { z } from "zod";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -15,32 +17,95 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [mode, setMode] = useState<"signin" | "signup" | "forgot">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [remember, setRemember] = useState(true);
+  const [errors, setErrors] = useState<{ email?: string; password?: string; name?: string }>({});
+
+  const signInSchema = z.object({
+    email: z.string().trim().email("Enter a valid email"),
+    password: z.string().min(1, "Password is required"),
+  });
+  const signUpSchema = z.object({
+    name: z.string().trim().min(1, "Name is required").max(80),
+    email: z.string().trim().email("Enter a valid email"),
+    password: z.string().min(8, "At least 8 characters"),
+  });
+  const forgotSchema = z.object({
+    email: z.string().trim().email("Enter a valid email"),
+  });
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    setErrors({});
+    if (mode === "signup") {
+      const r = signUpSchema.safeParse({ name, email, password });
+      if (!r.success) {
+        const f = r.error.flatten().fieldErrors;
+        setErrors({ name: f.name?.[0], email: f.email?.[0], password: f.password?.[0] });
+        return;
+      }
+    } else if (mode === "signin") {
+      const r = signInSchema.safeParse({ email, password });
+      if (!r.success) {
+        const f = r.error.flatten().fieldErrors;
+        setErrors({ email: f.email?.[0], password: f.password?.[0] });
+        return;
+      }
+    } else {
+      const r = forgotSchema.safeParse({ email });
+      if (!r.success) {
+        setErrors({ email: r.error.flatten().fieldErrors.email?.[0] });
+        return;
+      }
+    }
     setLoading(true);
     try {
       if (mode === "signup") {
         const { error } = await supabase.auth.signUp({
-          email,
+          email: email.trim(),
           password,
           options: {
             emailRedirectTo: window.location.origin,
             data: { full_name: name || email.split("@")[0] },
           },
         });
-        if (error) throw error;
+        if (error) {
+          if (/registered|exists/i.test(error.message)) {
+            toast.error("This email is already registered. Try signing in.");
+            setMode("signin");
+            return;
+          }
+          throw error;
+        }
         toast.success("Account created. Welcome to ScholarOS.");
+        navigate({ to: "/dashboard" });
+      } else if (mode === "signin") {
+        if (!remember) sessionStorage.setItem("scholaros:ephemeral", "1");
+        const { error } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        });
+        if (error) {
+          if (/invalid/i.test(error.message)) {
+            toast.error("Incorrect email or password.");
+            return;
+          }
+          throw error;
+        }
+        toast.success("Signed in.");
+        navigate({ to: "/dashboard" });
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+          redirectTo: `${window.location.origin}/reset-password`,
+        });
         if (error) throw error;
+        toast.success("Password reset link sent. Check your email.");
+        setMode("signin");
       }
-      navigate({ to: "/dashboard" });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
@@ -95,12 +160,18 @@ function AuthPage() {
           </div>
           <div>
             <h2 className="text-2xl font-bold tracking-tight">
-              {mode === "signin" ? "Welcome back" : "Create your account"}
+              {mode === "signin"
+                ? "Welcome back"
+                : mode === "signup"
+                  ? "Create your account"
+                  : "Reset your password"}
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
               {mode === "signin"
                 ? "Sign in to your personal academic dashboard."
-                : "One student, one account. Everything stays yours."}
+                : mode === "signup"
+                  ? "One student, one account. Everything stays yours."
+                  : "We'll email you a link to set a new password."}
             </p>
           </div>
           <form onSubmit={submit} className="space-y-4">
@@ -110,37 +181,74 @@ function AuthPage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Alex Rivers"
-                  className="w-full rounded-xl border border-hairline bg-surface px-4 py-2.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                  autoComplete="name"
+                  className="w-full rounded-xl border border-hairline bg-surface px-4 py-2.5 text-base sm:text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
                 />
+                {errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
               </Field>
             )}
             <Field label="Email">
               <input
                 type="email"
-                required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@college.edu"
-                className="w-full rounded-xl border border-hairline bg-surface px-4 py-2.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                autoComplete="email"
+                inputMode="email"
+                className="w-full rounded-xl border border-hairline bg-surface px-4 py-2.5 text-base sm:text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
               />
+              {errors.email && <p className="text-xs text-red-500">{errors.email}</p>}
             </Field>
-            <Field label="Password">
-              <input
-                type="password"
-                required
-                minLength={8}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="At least 8 characters"
-                className="w-full rounded-xl border border-hairline bg-surface px-4 py-2.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-              />
-            </Field>
+            {mode !== "forgot" && (
+              <Field label="Password">
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={mode === "signup" ? "At least 8 characters" : "Your password"}
+                  autoComplete={mode === "signup" ? "new-password" : "current-password"}
+                  className="w-full rounded-xl border border-hairline bg-surface px-4 py-2.5 text-base sm:text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                />
+                {errors.password && <p className="text-xs text-red-500">{errors.password}</p>}
+              </Field>
+            )}
+            {mode === "signin" && (
+              <div className="flex items-center justify-between text-xs">
+                <label className="flex items-center gap-2 text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    checked={remember}
+                    onChange={(e) => setRemember(e.target.checked)}
+                    className="size-4 rounded border-hairline accent-brand"
+                  />
+                  Remember me
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setMode("forgot")}
+                  className="font-medium text-brand hover:underline"
+                >
+                  Forgot password?
+                </button>
+              </div>
+            )}
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-xl bg-brand py-2.5 text-sm font-semibold text-brand-foreground shadow-sm transition hover:opacity-90 disabled:opacity-60"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand py-2.5 text-sm font-semibold text-brand-foreground shadow-sm transition hover:opacity-90 disabled:opacity-60"
             >
-              {loading ? "…" : mode === "signin" ? "Sign in" : "Create account"}
+              {loading && <Loader2 className="size-4 animate-spin" />}
+              {loading
+                ? mode === "signin"
+                  ? "Signing in…"
+                  : mode === "signup"
+                    ? "Creating account…"
+                    : "Sending link…"
+                : mode === "signin"
+                  ? "Sign in"
+                  : mode === "signup"
+                    ? "Create account"
+                    : "Send reset link"}
             </button>
           </form>
           <button
@@ -149,7 +257,9 @@ function AuthPage() {
           >
             {mode === "signin"
               ? "Don't have an account? Sign up"
-              : "Already have an account? Sign in"}
+              : mode === "signup"
+                ? "Already have an account? Sign in"
+                : "Back to sign in"}
           </button>
         </div>
       </main>
