@@ -4,7 +4,18 @@ import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, Button, Badge, EmptyState, SectionTitle, Select } from "@/components/ui-primitives";
 import { toast } from "sonner";
-import { format, subDays, startOfWeek, startOfMonth } from "date-fns";
+import {
+  format,
+  subDays,
+  startOfWeek,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  addMonths,
+  getDay,
+  isSameMonth,
+  isToday,
+} from "date-fns";
 import {
   attendancePct,
   classesNeeded,
@@ -23,7 +34,7 @@ import {
   Tooltip,
   CartesianGrid,
 } from "recharts";
-import { Check, X, Coffee } from "lucide-react";
+import { Check, X, Coffee, ChevronLeft, ChevronRight, Coffee as BreakIcon } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/attendance")({
   head: () => ({ meta: [{ title: "Attendance — ScholarOS" }] }),
@@ -35,18 +46,42 @@ function AttendancePage() {
   const { data } = useQuery({
     queryKey: ["attendance-page"],
     queryFn: async () => {
-      const [s, a] = await Promise.all([
+      const { data: userRes } = await supabase.auth.getUser();
+      const uid = userRes.user?.id;
+      const [s, a, slots, prof] = await Promise.all([
         supabase.from("subjects").select("*").order("name"),
         supabase.from("attendance").select("*").order("date", { ascending: false }),
+        supabase.from("timetable_slots").select("*"),
+        uid
+          ? supabase
+              .from("profiles")
+              .select("attendance_target,classes_per_day,working_days")
+              .eq("id", uid)
+              .maybeSingle()
+          : Promise.resolve({ data: null }),
       ]);
-      return { subjects: s.data ?? [], attendance: a.data ?? [] };
+      return {
+        subjects: s.data ?? [],
+        attendance: a.data ?? [],
+        slots: slots.data ?? [],
+        profile: prof.data ?? null,
+      };
     },
   });
   const [date, setDate] = useState(() => format(new Date(), "yyyy-MM-dd"));
   const subjects = data?.subjects ?? [];
   const attendance = data?.attendance ?? [];
+  const slots = data?.slots ?? [];
+  const target = Number(data?.profile?.attendance_target ?? 75);
+  const classesPerDay = data?.profile?.classes_per_day ?? 6;
+  const workingDays: number[] = data?.profile?.working_days ?? [1, 2, 3, 4, 5, 6];
 
   const dayRows = attendance.filter((a) => a.date === date);
+  const dayOfWeek = new Date(`${date}T00:00:00`).getDay();
+  const isWorkingDay = workingDays.includes(dayOfWeek);
+  const daySlots = slots.filter((s) => s.day_of_week === dayOfWeek);
+
+  const periodsToShow = Array.from({ length: classesPerDay }, (_, i) => i + 1);
 
   async function mark(subjectId: string, period: number, status: AttendanceStatus) {
     const { data: u } = await supabase.auth.getUser();
@@ -131,6 +166,11 @@ function AttendancePage() {
             />
           }
         />
+        {!isWorkingDay && (
+          <div className="mb-4 rounded-xl border border-hairline bg-surface-alt/50 p-3 text-xs text-muted-foreground">
+            {DAYS[dayOfWeek]} is not a working day in your settings. You can still mark manually below.
+          </div>
+        )}
         {subjects.length === 0 ? (
           <EmptyState
             title="Add subjects first"
@@ -138,8 +178,29 @@ function AttendancePage() {
           />
         ) : (
           <div className="space-y-2">
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((p) => {
+            {periodsToShow.map((p) => {
               const row = dayRows.find((r) => r.period === p);
+              const slot = daySlots.find((s) => s.period === p);
+              // Prefill subject from timetable if attendance row hasn't overridden it
+              const effectiveSubjectId = row?.subject_id ?? slot?.subject_id ?? "";
+              const isBreak = slot?.slot_type === "break";
+              if (isBreak) {
+                return (
+                  <div
+                    key={p}
+                    className="grid grid-cols-[auto_1fr] items-center gap-3 rounded-xl border border-dashed border-hairline bg-surface-alt/20 p-3"
+                  >
+                    <div className="grid size-9 place-items-center rounded-lg bg-surface-alt font-mono text-xs font-bold text-muted-foreground">
+                      P{p}
+                    </div>
+                    <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                      <BreakIcon className="size-4" />
+                      {slot?.label || "Break"}
+                    </div>
+                  </div>
+                );
+              }
+              const subjName = subjects.find((s) => s.id === effectiveSubjectId)?.name;
               return (
                 <div
                   key={p}
@@ -149,17 +210,18 @@ function AttendancePage() {
                     P{p}
                   </div>
                   <Select
-                    value={row?.subject_id ?? ""}
+                    value={effectiveSubjectId}
                     onChange={(e) => {
                       const sid = e.target.value;
                       if (!sid) return;
                       mark(sid, p, row?.status as AttendanceStatus ?? "present");
                     }}
                   >
-                    <option value="">— Select subject —</option>
+                    <option value="">{subjName ? subjName : "— Select subject —"}</option>
                     {subjects.map((s) => (
                       <option key={s.id} value={s.id}>
                         {s.name}
+                        {slot?.subject_id === s.id ? " (from timetable)" : ""}
                       </option>
                     ))}
                   </Select>
@@ -167,24 +229,24 @@ function AttendancePage() {
                     <StatusBtn
                       active={row?.status === "present"}
                       tone="safe"
-                      onClick={() => row?.subject_id && mark(row.subject_id, p, "present")}
-                      disabled={!row?.subject_id}
+                      onClick={() => effectiveSubjectId && mark(effectiveSubjectId, p, "present")}
+                      disabled={!effectiveSubjectId}
                       icon={<Check className="size-4" />}
                       label="P"
                     />
                     <StatusBtn
                       active={row?.status === "absent"}
                       tone="danger"
-                      onClick={() => row?.subject_id && mark(row.subject_id, p, "absent")}
-                      disabled={!row?.subject_id}
+                      onClick={() => effectiveSubjectId && mark(effectiveSubjectId, p, "absent")}
+                      disabled={!effectiveSubjectId}
                       icon={<X className="size-4" />}
                       label="A"
                     />
                     <StatusBtn
                       active={row?.status === "leave"}
                       tone="warn"
-                      onClick={() => row?.subject_id && mark(row.subject_id, p, "leave")}
-                      disabled={!row?.subject_id}
+                      onClick={() => effectiveSubjectId && mark(effectiveSubjectId, p, "leave")}
+                      disabled={!effectiveSubjectId}
                       icon={<Coffee className="size-4" />}
                       label="L"
                     />
@@ -288,7 +350,7 @@ function AttendancePage() {
                   <th className="pb-3 pr-4">Present</th>
                   <th className="pb-3 pr-4">%</th>
                   <th className="pb-3 pr-4">Status</th>
-                  <th className="pb-3 pr-4">To reach 75%</th>
+                  <th className="pb-3 pr-4">To reach {target}%</th>
                   <th className="pb-3">Can skip</th>
                 </tr>
               </thead>
@@ -310,10 +372,10 @@ function AttendancePage() {
                         </Badge>
                       </td>
                       <td className="py-3 pr-4 font-mono">
-                        {classesNeeded(s.present, s.total) || "—"}
+                        {classesNeeded(s.present, s.total, target) || "—"}
                       </td>
                       <td className="py-3 font-mono">
-                        {classesCanSkip(s.present, s.total) || "0"}
+                        {classesCanSkip(s.present, s.total, target) || "0"}
                       </td>
                     </tr>
                   );
@@ -323,9 +385,98 @@ function AttendancePage() {
           </div>
         )}
       </Card>
+
+      <MonthlyCalendar attendance={attendance} target={target} />
+
       {/* silence unused import warning */}
       <div className="hidden">{DAYS.join("")}</div>
     </div>
+  );
+}
+
+function MonthlyCalendar({
+  attendance,
+  target,
+}: {
+  attendance: { date: string; status: string }[];
+  target: number;
+}) {
+  const [cursor, setCursor] = useState(() => startOfMonth(new Date()));
+  const days = eachDayOfInterval({ start: startOfMonth(cursor), end: endOfMonth(cursor) });
+  const leadingBlanks = getDay(startOfMonth(cursor)); // 0=Sun
+  const byDay = new Map<string, { present: number; absent: number; leave: number }>();
+  for (const r of attendance) {
+    const cur = byDay.get(r.date) ?? { present: 0, absent: 0, leave: 0 };
+    if (r.status === "present") cur.present++;
+    else if (r.status === "absent") cur.absent++;
+    else if (r.status === "leave") cur.leave++;
+    byDay.set(r.date, cur);
+  }
+
+  function dayTone(key: string): string {
+    const d = byDay.get(key);
+    if (!d) return "";
+    const counted = d.present + d.absent;
+    if (counted === 0) return "bg-surface-alt";
+    const pct = (d.present / counted) * 100;
+    if (pct >= target + 10) return "bg-emerald-500/25 text-emerald-500";
+    if (pct >= target) return "bg-emerald-500/15 text-emerald-500";
+    if (pct >= target - 15) return "bg-amber-500/20 text-amber-600";
+    return "bg-rose-500/20 text-rose-500";
+  }
+
+  return (
+    <Card>
+      <SectionTitle
+        title={`Attendance calendar · ${format(cursor, "MMMM yyyy")}`}
+        subtitle={`Green ≥ ${target}%, amber near shortfall, red below.`}
+        right={
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" onClick={() => setCursor((c) => addMonths(c, -1))}>
+              <ChevronLeft className="size-4" />
+            </Button>
+            <Button variant="ghost" onClick={() => setCursor(startOfMonth(new Date()))}>
+              Today
+            </Button>
+            <Button variant="ghost" onClick={() => setCursor((c) => addMonths(c, 1))}>
+              <ChevronRight className="size-4" />
+            </Button>
+          </div>
+        }
+      />
+      <div className="grid grid-cols-7 gap-1 text-center">
+        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
+          <div key={d} className="pb-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+            {d}
+          </div>
+        ))}
+        {Array.from({ length: leadingBlanks }).map((_, i) => (
+          <div key={`b${i}`} />
+        ))}
+        {days.map((d) => {
+          const key = format(d, "yyyy-MM-dd");
+          const entry = byDay.get(key);
+          const tone = dayTone(key);
+          const dim = !isSameMonth(d, cursor);
+          return (
+            <div
+              key={key}
+              className={`aspect-square rounded-lg border border-hairline p-1 text-[11px] ${tone} ${
+                dim ? "opacity-40" : ""
+              } ${isToday(d) ? "ring-2 ring-brand ring-offset-1 ring-offset-surface" : ""}`}
+            >
+              <div className="font-mono font-bold">{format(d, "d")}</div>
+              {entry && (
+                <div className="mt-0.5 font-mono text-[9px] leading-tight opacity-80">
+                  {entry.present}P {entry.absent}A
+                  {entry.leave ? ` ${entry.leave}L` : ""}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </Card>
   );
 }
 

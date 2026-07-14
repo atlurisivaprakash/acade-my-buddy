@@ -8,6 +8,7 @@ import { exportAttendancePdf, exportMarksPdf, exportAllExcel, backupJson } from 
 import { InstallAppButton } from "@/components/install-app-button";
 import { useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
+import { Sun, Moon, Monitor } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({ meta: [{ title: "Settings — ScholarOS" }] }),
@@ -41,6 +42,20 @@ function SettingsPage() {
   const [changingPw, setChangingPw] = useState(false);
   const [resendingVerif, setResendingVerif] = useState(false);
   const [signingOutAll, setSigningOutAll] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark" | "system">(() => {
+    if (typeof window === "undefined") return "dark";
+    return (localStorage.getItem("scholaros-theme") as "light" | "dark") || "system";
+  });
+
+  function applyTheme(next: "light" | "dark" | "system") {
+    setTheme(next);
+    const isDark =
+      next === "dark" ||
+      (next === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    document.documentElement.classList.toggle("dark", isDark);
+    if (next === "system") localStorage.removeItem("scholaros-theme");
+    else localStorage.setItem("scholaros-theme", next);
+  }
 
   useEffect(() => {
     (async () => {
@@ -197,6 +212,38 @@ function SettingsPage() {
           {saving ? "Saving…" : "Save settings"}
         </Button>
       </div>
+
+      <Card>
+        <h3 className="mb-1 text-base font-semibold">Appearance</h3>
+        <p className="mb-4 text-sm text-muted-foreground">
+          Choose how ScholarOS looks. System matches your device setting.
+        </p>
+        <div className="grid grid-cols-3 gap-2 sm:max-w-sm">
+          {(
+            [
+              { v: "light", label: "Light", Icon: Sun },
+              { v: "dark", label: "Dark", Icon: Moon },
+              { v: "system", label: "System", Icon: Monitor },
+            ] as const
+          ).map(({ v, label, Icon }) => {
+            const on = theme === v;
+            return (
+              <button
+                key={v}
+                onClick={() => applyTheme(v)}
+                className={`flex flex-col items-center gap-1.5 rounded-xl border px-3 py-3 text-xs font-semibold transition ${
+                  on
+                    ? "border-brand bg-brand-soft text-brand"
+                    : "border-hairline text-muted-foreground hover:bg-surface-alt"
+                }`}
+              >
+                <Icon className="size-4" />
+                {label}
+              </button>
+            );
+          })}
+        </div>
+      </Card>
 
       <Card>
         <h3 className="mb-1 text-base font-semibold">Data management</h3>
