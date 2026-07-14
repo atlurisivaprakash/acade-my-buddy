@@ -350,7 +350,7 @@ function AttendancePage() {
                   <th className="pb-3 pr-4">Present</th>
                   <th className="pb-3 pr-4">%</th>
                   <th className="pb-3 pr-4">Status</th>
-                  <th className="pb-3 pr-4">To reach 75%</th>
+                  <th className="pb-3 pr-4">To reach {target}%</th>
                   <th className="pb-3">Can skip</th>
                 </tr>
               </thead>
@@ -372,10 +372,10 @@ function AttendancePage() {
                         </Badge>
                       </td>
                       <td className="py-3 pr-4 font-mono">
-                        {classesNeeded(s.present, s.total) || "—"}
+                        {classesNeeded(s.present, s.total, target) || "—"}
                       </td>
                       <td className="py-3 font-mono">
-                        {classesCanSkip(s.present, s.total) || "0"}
+                        {classesCanSkip(s.present, s.total, target) || "0"}
                       </td>
                     </tr>
                   );
@@ -385,9 +385,98 @@ function AttendancePage() {
           </div>
         )}
       </Card>
+
+      <MonthlyCalendar attendance={attendance} target={target} />
+
       {/* silence unused import warning */}
       <div className="hidden">{DAYS.join("")}</div>
     </div>
+  );
+}
+
+function MonthlyCalendar({
+  attendance,
+  target,
+}: {
+  attendance: { date: string; status: string }[];
+  target: number;
+}) {
+  const [cursor, setCursor] = useState(() => startOfMonth(new Date()));
+  const days = eachDayOfInterval({ start: startOfMonth(cursor), end: endOfMonth(cursor) });
+  const leadingBlanks = getDay(startOfMonth(cursor)); // 0=Sun
+  const byDay = new Map<string, { present: number; absent: number; leave: number }>();
+  for (const r of attendance) {
+    const cur = byDay.get(r.date) ?? { present: 0, absent: 0, leave: 0 };
+    if (r.status === "present") cur.present++;
+    else if (r.status === "absent") cur.absent++;
+    else if (r.status === "leave") cur.leave++;
+    byDay.set(r.date, cur);
+  }
+
+  function dayTone(key: string): string {
+    const d = byDay.get(key);
+    if (!d) return "";
+    const counted = d.present + d.absent;
+    if (counted === 0) return "bg-surface-alt";
+    const pct = (d.present / counted) * 100;
+    if (pct >= target + 10) return "bg-emerald-500/25 text-emerald-500";
+    if (pct >= target) return "bg-emerald-500/15 text-emerald-500";
+    if (pct >= target - 15) return "bg-amber-500/20 text-amber-600";
+    return "bg-rose-500/20 text-rose-500";
+  }
+
+  return (
+    <Card>
+      <SectionTitle
+        title={`Attendance calendar · ${format(cursor, "MMMM yyyy")}`}
+        subtitle={`Green ≥ ${target}%, amber near shortfall, red below.`}
+        right={
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" onClick={() => setCursor((c) => addMonths(c, -1))}>
+              <ChevronLeft className="size-4" />
+            </Button>
+            <Button variant="ghost" onClick={() => setCursor(startOfMonth(new Date()))}>
+              Today
+            </Button>
+            <Button variant="ghost" onClick={() => setCursor((c) => addMonths(c, 1))}>
+              <ChevronRight className="size-4" />
+            </Button>
+          </div>
+        }
+      />
+      <div className="grid grid-cols-7 gap-1 text-center">
+        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
+          <div key={d} className="pb-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+            {d}
+          </div>
+        ))}
+        {Array.from({ length: leadingBlanks }).map((_, i) => (
+          <div key={`b${i}`} />
+        ))}
+        {days.map((d) => {
+          const key = format(d, "yyyy-MM-dd");
+          const entry = byDay.get(key);
+          const tone = dayTone(key);
+          const dim = !isSameMonth(d, cursor);
+          return (
+            <div
+              key={key}
+              className={`aspect-square rounded-lg border border-hairline p-1 text-[11px] ${tone} ${
+                dim ? "opacity-40" : ""
+              } ${isToday(d) ? "ring-2 ring-brand ring-offset-1 ring-offset-surface" : ""}`}
+            >
+              <div className="font-mono font-bold">{format(d, "d")}</div>
+              {entry && (
+                <div className="mt-0.5 font-mono text-[9px] leading-tight opacity-80">
+                  {entry.present}P {entry.absent}A
+                  {entry.leave ? ` ${entry.leave}L` : ""}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </Card>
   );
 }
 
