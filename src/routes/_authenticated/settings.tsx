@@ -214,6 +214,38 @@ function SettingsPage() {
       </div>
 
       <Card>
+        <h3 className="mb-1 text-base font-semibold">Appearance</h3>
+        <p className="mb-4 text-sm text-muted-foreground">
+          Choose how ScholarOS looks. System matches your device setting.
+        </p>
+        <div className="grid grid-cols-3 gap-2 sm:max-w-sm">
+          {(
+            [
+              { v: "light", label: "Light", Icon: Sun },
+              { v: "dark", label: "Dark", Icon: Moon },
+              { v: "system", label: "System", Icon: Monitor },
+            ] as const
+          ).map(({ v, label, Icon }) => {
+            const on = theme === v;
+            return (
+              <button
+                key={v}
+                onClick={() => applyTheme(v)}
+                className={`flex flex-col items-center gap-1.5 rounded-xl border px-3 py-3 text-xs font-semibold transition ${
+                  on
+                    ? "border-brand bg-brand-soft text-brand"
+                    : "border-hairline text-muted-foreground hover:bg-surface-alt"
+                }`}
+              >
+                <Icon className="size-4" />
+                {label}
+              </button>
+            );
+          })}
+        </div>
+      </Card>
+
+      <Card>
         <h3 className="mb-1 text-base font-semibold">Data management</h3>
         <p className="mb-4 text-sm text-muted-foreground">
           Export your academic data or back it up. All exports are generated in your browser.
