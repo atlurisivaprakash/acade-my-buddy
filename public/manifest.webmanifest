@@ -1,0 +1,15 @@
+{
+  "name": "ScholarOS — Student Life Manager",
+  "short_name": "ScholarOS",
+  "description": "Attendance, marks, GPA, timetable, tasks and study materials in one calm dashboard.",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b0d12",
+  "theme_color": "#4F46E5",
+  "icons": [
+    { "src": "/app-icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/app-icon.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
