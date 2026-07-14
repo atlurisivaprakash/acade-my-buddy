@@ -3,8 +3,11 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Card, SectionTitle, Button, Input } from "@/components/ui-primitives";
-import { Loader2, FileDown, FileSpreadsheet, Database } from "lucide-react";
+import { Loader2, FileDown, FileSpreadsheet, Database, ShieldCheck, MailCheck, LogOut } from "lucide-react";
 import { exportAttendancePdf, exportMarksPdf, exportAllExcel, backupJson } from "@/lib/exports";
+import { InstallAppButton } from "@/components/install-app-button";
+import { useNavigate } from "@tanstack/react-router";
+import { z } from "zod";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({ meta: [{ title: "Settings — ScholarOS" }] }),
