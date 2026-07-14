@@ -46,18 +46,42 @@ function AttendancePage() {
   const { data } = useQuery({
     queryKey: ["attendance-page"],
     queryFn: async () => {
-      const [s, a] = await Promise.all([
+      const { data: userRes } = await supabase.auth.getUser();
+      const uid = userRes.user?.id;
+      const [s, a, slots, prof] = await Promise.all([
         supabase.from("subjects").select("*").order("name"),
         supabase.from("attendance").select("*").order("date", { ascending: false }),
+        supabase.from("timetable_slots").select("*"),
+        uid
+          ? supabase
+              .from("profiles")
+              .select("attendance_target,classes_per_day,working_days")
+              .eq("id", uid)
+              .maybeSingle()
+          : Promise.resolve({ data: null }),
       ]);
-      return { subjects: s.data ?? [], attendance: a.data ?? [] };
+      return {
+        subjects: s.data ?? [],
+        attendance: a.data ?? [],
+        slots: slots.data ?? [],
+        profile: prof.data ?? null,
+      };
     },
   });
   const [date, setDate] = useState(() => format(new Date(), "yyyy-MM-dd"));
   const subjects = data?.subjects ?? [];
   const attendance = data?.attendance ?? [];
+  const slots = data?.slots ?? [];
+  const target = Number(data?.profile?.attendance_target ?? 75);
+  const classesPerDay = data?.profile?.classes_per_day ?? 6;
+  const workingDays: number[] = data?.profile?.working_days ?? [1, 2, 3, 4, 5, 6];
 
   const dayRows = attendance.filter((a) => a.date === date);
+  const dayOfWeek = new Date(`${date}T00:00:00`).getDay();
+  const isWorkingDay = workingDays.includes(dayOfWeek);
+  const daySlots = slots.filter((s) => s.day_of_week === dayOfWeek);
+
+  const periodsToShow = Array.from({ length: classesPerDay }, (_, i) => i + 1);
 
   async function mark(subjectId: string, period: number, status: AttendanceStatus) {
     const { data: u } = await supabase.auth.getUser();
