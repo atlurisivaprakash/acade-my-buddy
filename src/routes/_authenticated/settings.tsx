@@ -8,6 +8,7 @@ import { exportAttendancePdf, exportMarksPdf, exportAllExcel, backupJson } from 
 import { InstallAppButton } from "@/components/install-app-button";
 import { useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
+import { Sun, Moon, Monitor } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({ meta: [{ title: "Settings — ScholarOS" }] }),
