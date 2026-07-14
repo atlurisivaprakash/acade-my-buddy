@@ -25,6 +25,7 @@ const DAYS = [
 ];
 
 function SettingsPage() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [classesPerDay, setClassesPerDay] = useState(6);
@@ -32,11 +33,21 @@ function SettingsPage() {
   const [semester, setSemester] = useState<number>(1);
   const [academicYear, setAcademicYear] = useState<string>("");
   const [attendanceTarget, setAttendanceTarget] = useState<number>(75);
+  const [emailConfirmed, setEmailConfirmed] = useState<boolean>(false);
+  const [userEmail, setUserEmail] = useState<string>("");
+  const [pwCurrent, setPwCurrent] = useState("");
+  const [pwNew, setPwNew] = useState("");
+  const [pwConfirm, setPwConfirm] = useState("");
+  const [changingPw, setChangingPw] = useState(false);
+  const [resendingVerif, setResendingVerif] = useState(false);
+  const [signingOutAll, setSigningOutAll] = useState(false);
 
   useEffect(() => {
     (async () => {
       const { data: userRes } = await supabase.auth.getUser();
       if (!userRes.user) return;
+      setUserEmail(userRes.user.email ?? "");
+      setEmailConfirmed(Boolean(userRes.user.email_confirmed_at || userRes.user.confirmed_at));
       const { data } = await supabase
         .from("profiles")
         .select("classes_per_day,working_days,semester,academic_year,attendance_target")
