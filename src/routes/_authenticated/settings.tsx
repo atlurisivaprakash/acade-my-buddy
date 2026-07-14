@@ -42,6 +42,20 @@ function SettingsPage() {
   const [changingPw, setChangingPw] = useState(false);
   const [resendingVerif, setResendingVerif] = useState(false);
   const [signingOutAll, setSigningOutAll] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark" | "system">(() => {
+    if (typeof window === "undefined") return "dark";
+    return (localStorage.getItem("scholaros-theme") as "light" | "dark") || "system";
+  });
+
+  function applyTheme(next: "light" | "dark" | "system") {
+    setTheme(next);
+    const isDark =
+      next === "dark" ||
+      (next === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    document.documentElement.classList.toggle("dark", isDark);
+    if (next === "system") localStorage.removeItem("scholaros-theme");
+    else localStorage.setItem("scholaros-theme", next);
+  }
 
   useEffect(() => {
     (async () => {
