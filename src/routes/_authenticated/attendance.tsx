@@ -4,7 +4,18 @@ import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, Button, Badge, EmptyState, SectionTitle, Select } from "@/components/ui-primitives";
 import { toast } from "sonner";
-import { format, subDays, startOfWeek, startOfMonth } from "date-fns";
+import {
+  format,
+  subDays,
+  startOfWeek,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  addMonths,
+  getDay,
+  isSameMonth,
+  isToday,
+} from "date-fns";
 import {
   attendancePct,
   classesNeeded,
@@ -23,7 +34,7 @@ import {
   Tooltip,
   CartesianGrid,
 } from "recharts";
-import { Check, X, Coffee } from "lucide-react";
+import { Check, X, Coffee, ChevronLeft, ChevronRight, Coffee as BreakIcon } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/attendance")({
   head: () => ({ meta: [{ title: "Attendance — ScholarOS" }] }),
