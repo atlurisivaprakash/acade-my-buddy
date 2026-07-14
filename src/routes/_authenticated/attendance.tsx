@@ -166,6 +166,11 @@ function AttendancePage() {
             />
           }
         />
+        {!isWorkingDay && (
+          <div className="mb-4 rounded-xl border border-hairline bg-surface-alt/50 p-3 text-xs text-muted-foreground">
+            {DAYS[dayOfWeek]} is not a working day in your settings. You can still mark manually below.
+          </div>
+        )}
         {subjects.length === 0 ? (
           <EmptyState
             title="Add subjects first"
@@ -173,8 +178,29 @@ function AttendancePage() {
           />
         ) : (
           <div className="space-y-2">
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((p) => {
+            {periodsToShow.map((p) => {
               const row = dayRows.find((r) => r.period === p);
+              const slot = daySlots.find((s) => s.period === p);
+              // Prefill subject from timetable if attendance row hasn't overridden it
+              const effectiveSubjectId = row?.subject_id ?? slot?.subject_id ?? "";
+              const isBreak = slot?.slot_type === "break";
+              if (isBreak) {
+                return (
+                  <div
+                    key={p}
+                    className="grid grid-cols-[auto_1fr] items-center gap-3 rounded-xl border border-dashed border-hairline bg-surface-alt/20 p-3"
+                  >
+                    <div className="grid size-9 place-items-center rounded-lg bg-surface-alt font-mono text-xs font-bold text-muted-foreground">
+                      P{p}
+                    </div>
+                    <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                      <BreakIcon className="size-4" />
+                      {slot?.label || "Break"}
+                    </div>
+                  </div>
+                );
+              }
+              const subjName = subjects.find((s) => s.id === effectiveSubjectId)?.name;
               return (
                 <div
                   key={p}
@@ -184,17 +210,18 @@ function AttendancePage() {
                     P{p}
                   </div>
                   <Select
-                    value={row?.subject_id ?? ""}
+                    value={effectiveSubjectId}
                     onChange={(e) => {
                       const sid = e.target.value;
                       if (!sid) return;
                       mark(sid, p, row?.status as AttendanceStatus ?? "present");
                     }}
                   >
-                    <option value="">— Select subject —</option>
+                    <option value="">{subjName ? subjName : "— Select subject —"}</option>
                     {subjects.map((s) => (
                       <option key={s.id} value={s.id}>
                         {s.name}
+                        {slot?.subject_id === s.id ? " (from timetable)" : ""}
                       </option>
                     ))}
                   </Select>
@@ -202,24 +229,24 @@ function AttendancePage() {
                     <StatusBtn
                       active={row?.status === "present"}
                       tone="safe"
-                      onClick={() => row?.subject_id && mark(row.subject_id, p, "present")}
-                      disabled={!row?.subject_id}
+                      onClick={() => effectiveSubjectId && mark(effectiveSubjectId, p, "present")}
+                      disabled={!effectiveSubjectId}
                       icon={<Check className="size-4" />}
                       label="P"
                     />
                     <StatusBtn
                       active={row?.status === "absent"}
                       tone="danger"
-                      onClick={() => row?.subject_id && mark(row.subject_id, p, "absent")}
-                      disabled={!row?.subject_id}
+                      onClick={() => effectiveSubjectId && mark(effectiveSubjectId, p, "absent")}
+                      disabled={!effectiveSubjectId}
                       icon={<X className="size-4" />}
                       label="A"
                     />
                     <StatusBtn
                       active={row?.status === "leave"}
                       tone="warn"
-                      onClick={() => row?.subject_id && mark(row.subject_id, p, "leave")}
-                      disabled={!row?.subject_id}
+                      onClick={() => effectiveSubjectId && mark(effectiveSubjectId, p, "leave")}
+                      disabled={!effectiveSubjectId}
                       icon={<Coffee className="size-4" />}
                       label="L"
                     />
